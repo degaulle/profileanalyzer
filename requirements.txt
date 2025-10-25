@@ -1,0 +1,11 @@
+flask==3.0.0
+flask-cors==4.0.0
+apify-client==1.7.1
+python-dotenv==1.0.0
+Pillow==10.1.0
+opencv-python==4.8.1.78
+anthropic==0.18.1
+beautifulsoup4==4.12.2
+requests==2.31.0
+numpy==1.26.2
+gunicorn==21.2.0
