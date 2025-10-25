@@ -15,7 +15,7 @@ class ProfileAnalyzer:
     def __init__(self, api_key: str):
         """Initialize analyzer with Anthropic API key"""
         self.client = Anthropic(api_key=api_key)
-        self.model = "claude-3-5-sonnet-20241022"  # Claude 3.5 Sonnet
+        self.model = "claude-3-5-sonnet-20240620"  # Claude 3.5 Sonnet
 
     def analyze_profile(self, posts_data: List[Dict], profile_info: Dict,
                        website_data: Dict = None, collage_paths: List[str] = None) -> Dict[str, Any]:

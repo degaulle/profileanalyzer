@@ -203,15 +203,27 @@ class InstagramDatabase:
     def save_analysis(self, username: str, analysis_data: Dict[str, Any]):
         """Save analysis results"""
         cursor = self.conn.cursor()
+
+        # Extract summary data
+        summary = analysis_data.get('summary', {})
+        if isinstance(summary, dict):
+            summary_text = summary.get('one_sentence', '')
+            openers = summary.get('openers', [])
+            keywords = summary.get('keywords', [])
+        else:
+            summary_text = str(summary)
+            openers = []
+            keywords = []
+
         cursor.execute('''
             INSERT INTO analysis_results
             (username, summary, openers, keywords, detailed_report, confidence_scores)
             VALUES (?, ?, ?, ?, ?, ?)
         ''', (
             username,
-            analysis_data.get('summary', ''),
-            json.dumps(analysis_data.get('openers', [])),
-            json.dumps(analysis_data.get('keywords', [])),
+            summary_text,
+            json.dumps(openers),
+            json.dumps(keywords),
             json.dumps(analysis_data.get('detailed_report', {})),
             json.dumps(analysis_data.get('confidence_scores', {}))
         ))
