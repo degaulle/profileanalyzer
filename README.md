@@ -10,7 +10,7 @@ A powerful web application that analyzes Instagram profiles using AI to provide 
 - 🎨 **Automatic Collage Generation** - Combine multi-image posts into beautiful collages
 - 🎥 **Video Frame Extraction** - Extract 9 evenly-spaced frames from video posts
 - 🌐 **Website Scraping** - Automatically scrape personal websites from profiles
-- 🤖 **AI-Powered Insights** - Uses Claude AI for personality and lifestyle analysis
+- 🤖 **AI-Powered Insights** - Uses Google Gemini 2.5 Flash with multimodal vision for text + image analysis
 
 ### Report Components
 
@@ -44,7 +44,7 @@ A powerful web application that analyzes Instagram profiles using AI to provide 
 
 - **Backend**: Flask (Python)
 - **Frontend**: HTML5, CSS3, Vanilla JavaScript
-- **AI**: Anthropic Claude API (Vision + Text)
+- **AI**: Google Gemini 2.5 Flash (Multimodal - Text + Vision)
 - **Scraping**: Apify Instagram API
 - **Image Processing**: Pillow (PIL)
 - **Video Processing**: OpenCV
@@ -55,7 +55,7 @@ A powerful web application that analyzes Instagram profiles using AI to provide 
 
 - Python 3.8+
 - Apify API Key (for Instagram scraping)
-- Anthropic API Key (for AI analysis)
+- Google Gemini API Key (for AI analysis)
 
 ## Installation
 
@@ -81,12 +81,12 @@ pip install -r requirements.txt
 Create a `.env` file in the root directory:
 ```env
 APIFY_API_TOKEN=your_apify_token_here
-ANTHROPIC_API_KEY=your_anthropic_key_here
+GOOGLE_API_KEY=your_google_api_key_here
 ```
 
 To get API keys:
 - **Apify**: Sign up at [apify.com](https://apify.com) and get your API token
-- **Anthropic**: Sign up at [anthropic.com](https://anthropic.com) and get your API key
+- **Google AI**: Sign up at [ai.google.dev](https://ai.google.dev) and get your Gemini API key
 
 ## Usage
 
@@ -207,7 +207,7 @@ Health check
 {
   "status": "healthy",
   "apify_configured": true,
-  "anthropic_configured": true
+  "google_configured": true
 }
 ```
 
@@ -228,7 +228,7 @@ self.image_processor = ImageProcessor(max_workers=10)  # Increase for faster pro
 ### Change AI Model
 In `utils/ai_analyzer.py`, change the model:
 ```python
-self.model = "claude-3-5-sonnet-20240620"  # or another Claude model
+self.model = genai.GenerativeModel('gemini-2.0-flash-exp')  # or gemini-1.5-pro, etc.
 ```
 
 ## Troubleshooting
@@ -251,9 +251,9 @@ self.model = "claude-3-5-sonnet-20240620"  # or another Claude model
 - Check that ffmpeg is available on your system
 
 ### AI analysis returns fallback data
-- Verify Anthropic API key is set correctly
-- Check API usage limits
-- Ensure the key has access to Claude 3.5 Sonnet
+- Verify Google Gemini API key is set correctly
+- Check API usage limits at [Google AI Studio](https://aistudio.google.com)
+- Ensure the key has access to Gemini 2.5 Flash
 
 ## Performance
 
@@ -318,6 +318,6 @@ For issues, questions, or feature requests, please open an issue on GitHub.
 ## Acknowledgments
 
 - Apify for Instagram scraping API
-- Anthropic for Claude AI API
+- Google for Gemini AI API
 - OpenCV for video processing
 - Flask for web framework

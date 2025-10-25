@@ -21,7 +21,7 @@ CORS(app)
 
 # Configuration
 APIFY_API_TOKEN = os.getenv('APIFY_API_TOKEN')
-ANTHROPIC_API_KEY = os.getenv('ANTHROPIC_API_KEY')
+GOOGLE_API_KEY = os.getenv('GOOGLE_API_KEY')
 
 # Store active analysis sessions
 analysis_sessions = {}
@@ -81,12 +81,12 @@ def run_analysis(session_id: str, profile_url: str, results_limit: int = 10):
         session.message = 'Generating collages complete. Starting AI analysis...'
 
         # Run AI analysis
-        if ANTHROPIC_API_KEY and ANTHROPIC_API_KEY != 'your_anthropic_api_key_here':
+        if GOOGLE_API_KEY and GOOGLE_API_KEY != 'your_google_api_key_here':
             session.status = 'analyzing'
             session.progress = 70
             session.message = 'Analyzing profile with AI...'
 
-            analyzer = ProfileAnalyzer(ANTHROPIC_API_KEY)
+            analyzer = ProfileAnalyzer(GOOGLE_API_KEY)
 
             # Get collage paths
             collage_paths = [
@@ -244,7 +244,7 @@ def health_check():
     return jsonify({
         'status': 'healthy',
         'apify_configured': bool(APIFY_API_TOKEN),
-        'anthropic_configured': bool(ANTHROPIC_API_KEY and ANTHROPIC_API_KEY != 'your_anthropic_api_key_here')
+        'google_configured': bool(GOOGLE_API_KEY and GOOGLE_API_KEY != 'your_google_api_key_here')
     })
 
 
@@ -258,7 +258,7 @@ if __name__ == '__main__':
     print("Instagram Profile Analyzer - Starting Server")
     print("="*60)
     print(f"Apify API: {'✓ Configured' if APIFY_API_TOKEN else '✗ Not configured'}")
-    print(f"Claude API: {'✓ Configured' if ANTHROPIC_API_KEY and ANTHROPIC_API_KEY != 'your_anthropic_api_key_here' else '✗ Not configured'}")
+    print(f"Google Gemini API: {'✓ Configured' if GOOGLE_API_KEY and GOOGLE_API_KEY != 'your_google_api_key_here' else '✗ Not configured'}")
     print("="*60)
     print("\nServer running at: http://localhost:8080")
     print("="*60 + "\n")
