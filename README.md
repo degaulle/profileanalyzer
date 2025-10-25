@@ -98,7 +98,7 @@ python app.py
 ```
 
 2. **Open your browser**
-Navigate to: `http://localhost:5000`
+Navigate to: `http://localhost:8080`
 
 3. **Enter Instagram profile**
 - Enter a profile URL (e.g., `https://www.instagram.com/username`)
