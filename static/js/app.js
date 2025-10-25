@@ -32,7 +32,7 @@ document.getElementById('analyze-form').addEventListener('submit', async (e) => 
             },
             body: JSON.stringify({
                 profile_url: profileUrl,
-                results_limit: 30
+                results_limit: 10
             })
         });
 
