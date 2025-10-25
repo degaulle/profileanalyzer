@@ -228,7 +228,7 @@ self.image_processor = ImageProcessor(max_workers=10)  # Increase for faster pro
 ### Change AI Model
 In `utils/ai_analyzer.py`, change the model:
 ```python
-self.model = "claude-3-5-sonnet-20241022"  # or another Claude model
+self.model = "claude-3-5-sonnet-20240620"  # or another Claude model
 ```
 
 ## Troubleshooting
