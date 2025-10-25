@@ -1,21 +1,19 @@
 """
-AI-powered profile analyzer using Claude API
+AI-powered profile analyzer using Google Gemini API
 """
 
 import os
 import json
-from anthropic import Anthropic
+import google.generativeai as genai
 from typing import Dict, List, Any
-import base64
-import requests
-from io import BytesIO
+from PIL import Image
 
 
 class ProfileAnalyzer:
     def __init__(self, api_key: str):
-        """Initialize analyzer with Anthropic API key"""
-        self.client = Anthropic(api_key=api_key)
-        self.model = "claude-3-5-sonnet-20240620"  # Claude 3.5 Sonnet
+        """Initialize analyzer with Google API key"""
+        genai.configure(api_key=api_key)
+        self.model = genai.GenerativeModel('gemini-2.0-flash-exp')
 
     def analyze_profile(self, posts_data: List[Dict], profile_info: Dict,
                        website_data: Dict = None, collage_paths: List[str] = None) -> Dict[str, Any]:
@@ -31,66 +29,48 @@ class ProfileAnalyzer:
         Returns:
             Complete analysis report
         """
-        print("Starting AI-powered profile analysis...")
+        print("Starting AI-powered profile analysis with Gemini 2.5 Flash...")
 
         # Prepare analysis prompt
         prompt = self._build_analysis_prompt(posts_data, profile_info, website_data)
 
-        # Prepare images for vision analysis (if available)
-        image_content = []
+        # Prepare images for vision analysis
+        content_parts = [prompt]
+
         if collage_paths:
-            # Limit to first 10 collages to avoid token limits
-            for path in collage_paths[:10]:
+            print(f"Loading {len(collage_paths)} post images for visual analysis...")
+            # Load all collage images
+            for idx, path in enumerate(collage_paths[:10], 1):  # Limit to 10 images
                 if os.path.exists(path):
                     try:
-                        with open(path, 'rb') as f:
-                            image_data = base64.standard_b64encode(f.read()).decode('utf-8')
-                            image_content.append({
-                                "type": "image",
-                                "source": {
-                                    "type": "base64",
-                                    "media_type": "image/jpeg",
-                                    "data": image_data
-                                }
-                            })
+                        img = Image.open(path)
+                        content_parts.append(img)
+                        print(f"  ✓ Loaded image {idx}: {os.path.basename(path)}")
                     except Exception as e:
-                        print(f"Error loading image {path}: {e}")
-
-        # Build message content
-        message_content = []
-
-        # Add text prompt
-        message_content.append({
-            "type": "text",
-            "text": prompt
-        })
-
-        # Add images if available
-        message_content.extend(image_content)
+                        print(f"  ✗ Error loading image {path}: {e}")
 
         try:
-            # Call Claude API
-            response = self.client.messages.create(
-                model=self.model,
-                max_tokens=4096,
-                temperature=0.7,
-                messages=[
-                    {
-                        "role": "user",
-                        "content": message_content
-                    }
-                ]
+            print(f"Sending request to Gemini with {len(content_parts)} parts (1 text + {len(content_parts)-1} images)...")
+
+            # Generate content with Gemini
+            response = self.model.generate_content(
+                content_parts,
+                generation_config={
+                    'temperature': 0.7,
+                    'max_output_tokens': 8192,
+                }
             )
 
             # Parse response
-            analysis_text = response.content[0].text
+            analysis_text = response.text
             analysis = self._parse_analysis_response(analysis_text, posts_data)
 
-            print("Analysis complete!")
+            print(f"✓ Analysis complete using Gemini 2.5 Flash!")
             return analysis
 
         except Exception as e:
             print(f"Error during AI analysis: {e}")
+            print(f"Using fallback analysis...")
             return self._generate_fallback_analysis(posts_data, profile_info)
 
     def _build_analysis_prompt(self, posts_data: List[Dict], profile_info: Dict,
@@ -111,7 +91,7 @@ class ProfileAnalyzer:
             post_stats.append(f"Post {idx}: {likes} likes, {comments} comments")
 
         # Build prompt
-        prompt = f"""You are an expert social media analyst. Analyze this Instagram profile and provide a comprehensive report.
+        prompt = f"""You are an expert social media analyst with advanced visual analysis capabilities. Analyze this Instagram profile using BOTH the text information provided AND the visual content in the images.
 
 PROFILE INFORMATION:
 Username: {profile_info.get('username', 'N/A')}
@@ -138,42 +118,53 @@ Content Preview: {website_data.get('text_content', '')[:1000]}
 
         prompt += """
 
+VISUAL ANALYSIS INSTRUCTIONS:
+I'm providing you with images of their Instagram posts. Please analyze:
+1. Visual themes and aesthetic preferences (colors, composition, style)
+2. Activities shown in the photos (hobbies, locations, social settings)
+3. People frequently appearing (friends, family, relationships)
+4. Lifestyle indicators (travel, food, fitness, work, etc.)
+5. Overall vibe and personality expressed through visuals
+6. Any patterns or recurring elements across posts
+
 Please provide a detailed analysis in the following JSON format:
 
 {
   "summary": {
-    "one_sentence": "A one-sentence summary about this person",
+    "one_sentence": "A one-sentence summary about this person based on text AND visual analysis",
     "openers": [
-      "First suggested opener to start a conversation",
-      "Second suggested opener",
-      "Third suggested opener"
+      "First suggested opener referencing specific visual or text content",
+      "Second suggested opener with personal touch",
+      "Third suggested opener based on their interests"
     ],
     "keywords": ["keyword1", "keyword2", "keyword3", "keyword4", "keyword5"]
   },
   "detailed_report": {
     "name_and_handle": "Analysis of their name and username",
     "intro_and_websites": "Overview of their bio and personal website",
-    "interests_and_hobbies": "Detailed analysis of their interests based on posts",
+    "interests_and_hobbies": "Detailed analysis combining captions AND visual content - what activities, hobbies, and interests are shown in the images?",
     "relationship_status": {
       "status": "single/in a relationship/married/unclear",
       "confidence": 75,
-      "evidence": "Key evidence supporting this conclusion"
+      "evidence": "Evidence from BOTH captions and images (e.g., 'frequently appears with same person in photos')"
     },
     "personality": {
       "mbti": "ENFP",
       "confidence": 60,
-      "analysis": "Detailed personality analysis with specific examples from posts"
+      "analysis": "Personality analysis based on visual style, activities shown, caption tone, and social patterns"
     },
-    "overall_presence": "Description of their overall social media presence and vibe",
-    "life_attitude": "Their lifestyle, values, and approach to life",
-    "notable_insights": "Other interesting observations about this person"
+    "overall_presence": "Description of their visual aesthetic, content style, and social media vibe",
+    "life_attitude": "Their lifestyle, values, and approach to life as shown through their posts and images",
+    "notable_insights": "Unique observations from analyzing both the visual and textual content together"
   }
 }
 
 IMPORTANT:
-- Be specific and reference actual content from their posts
+- Use BOTH text captions AND visual content from the images in your analysis
+- Reference specific visual elements you see in the photos
+- Be specific about patterns you notice across multiple images
 - Provide percentage confidence levels (0-100) for relationship status and MBTI
-- Base your analysis on evidence, not assumptions
+- Base your analysis on evidence from images and text, not assumptions
 - Be respectful and professional
 - Focus on positive insights while being honest
 - Return ONLY valid JSON without any additional text or markdown formatting
@@ -182,7 +173,7 @@ IMPORTANT:
         return prompt
 
     def _parse_analysis_response(self, response_text: str, posts_data: List[Dict]) -> Dict[str, Any]:
-        """Parse Claude's response into structured format"""
+        """Parse Gemini's response into structured format"""
         try:
             # Try to extract JSON from response
             # Remove markdown code blocks if present
