@@ -34,16 +34,35 @@ class ImageProcessor:
             return Image.new('RGB', (400, 400), color='gray')
 
     def download_video(self, url: str, output_path: str) -> str:
-        """Download video from URL"""
+        """Download video from URL with proper headers"""
         try:
-            response = requests.get(url, timeout=30, stream=True)
+            headers = {
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+            }
+            print(f"Downloading video from: {url[:100]}...")
+            response = requests.get(url, headers=headers, timeout=60, stream=True)
             response.raise_for_status()
+
+            total_size = 0
             with open(output_path, 'wb') as f:
                 for chunk in response.iter_content(chunk_size=8192):
-                    f.write(chunk)
-            return output_path
+                    if chunk:
+                        f.write(chunk)
+                        total_size += len(chunk)
+
+            print(f"✓ Downloaded video: {total_size / 1024 / 1024:.2f} MB")
+
+            # Verify file was created and has content
+            if os.path.exists(output_path) and os.path.getsize(output_path) > 0:
+                return output_path
+            else:
+                print(f"✗ Video file empty or not created")
+                return None
+
         except Exception as e:
-            print(f"Error downloading video from {url}: {e}")
+            print(f"✗ Error downloading video: {e}")
+            if os.path.exists(output_path):
+                os.remove(output_path)
             return None
 
     def download_images_parallel(self, image_urls: List[str]) -> List[Image.Image]:
@@ -174,13 +193,42 @@ class ImageProcessor:
         video_path = self.download_video(video_url, temp_video_path)
 
         if not video_path:
+            print(f"✗ Failed to download video, cannot extract frames")
             return []
 
         frames = []
         try:
+            print(f"Opening video file: {video_path}")
+            # Check if file exists and has content
+            if not os.path.exists(video_path):
+                print(f"✗ Video file does not exist: {video_path}")
+                return []
+
+            file_size = os.path.getsize(video_path)
+            print(f"Video file size: {file_size / 1024 / 1024:.2f} MB")
+
+            if file_size == 0:
+                print(f"✗ Video file is empty")
+                return []
+
             # Open video
             cap = cv2.VideoCapture(video_path)
+
+            if not cap.isOpened():
+                print(f"✗ OpenCV cannot open video file")
+                cap.release()
+                return []
+
             total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
+            fps = cap.get(cv2.CAP_PROP_FPS)
+            duration = total_frames / fps if fps > 0 else 0
+
+            print(f"Video info: {total_frames} frames, {fps:.2f} fps, {duration:.2f}s duration")
+
+            if total_frames == 0:
+                print(f"✗ Video has 0 frames")
+                cap.release()
+                return []
 
             if total_frames < num_frames:
                 num_frames = total_frames
@@ -199,12 +247,16 @@ class ImageProcessor:
 
             cap.release()
 
+            print(f"✓ Extracted {len(frames)} frames from video")
+
             # Clean up temp video file
             if os.path.exists(temp_video_path):
                 os.remove(temp_video_path)
 
         except Exception as e:
-            print(f"Error extracting frames from video: {e}")
+            print(f"✗ Error extracting frames from video: {e}")
+            import traceback
+            traceback.print_exc()
 
         return frames
 

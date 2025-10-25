@@ -97,16 +97,37 @@ class InstagramScraper:
 
         if items:
             item = items[0]
+
+            # Extract profile picture - try multiple fields
+            profile_pic_url = (
+                item.get('profilePicUrlHD') or
+                item.get('profilePicUrl') or
+                item.get('ownerProfilePicUrl') or
+                ''
+            )
+
+            # Extract full name and bio
+            full_name = item.get('ownerFullName', '') or item.get('fullName', '')
+
             profile = {
                 'username': username,
-                'full_name': item.get('ownerFullName', ''),
-                'profile_pic_url': item.get('profilePicUrlHD') or item.get('ownerProfilePicUrl', ''),
-                'bio': '',  # Bio not available in this API
-                'website': '',  # Will try to extract from posts
-                'ownerId': item.get('ownerId', '')
+                'full_name': full_name,
+                'profile_pic_url': profile_pic_url,
+                'bio': item.get('bio', '') or item.get('biography', ''),
+                'website': item.get('externalUrl', '') or item.get('website', ''),
+                'ownerId': item.get('ownerId', '') or item.get('id', ''),
+                'followers': item.get('followersCount', 0),
+                'following': item.get('followsCount', 0),
+                'is_verified': item.get('verified', False)
             }
+
+            print(f"✓ Profile fetched: {full_name} (@{username})")
+            print(f"  Profile pic: {profile_pic_url[:50]}..." if profile_pic_url else "  No profile pic")
+            print(f"  Bio: {profile['bio'][:50]}..." if profile['bio'] else "  No bio")
+
             return profile
 
+        print(f"✗ No profile data found for @{username}")
         return None
 
     def fetch_user_posts(self, username, results_limit=30):

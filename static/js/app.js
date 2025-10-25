@@ -198,17 +198,42 @@ function renderProfileSummary(report) {
     const summaryContainer = document.getElementById('profile-summary');
     const profile = report.profile;
 
+    const profilePicUrl = profile.profile_pic_url || 'https://via.placeholder.com/120?text=No+Image';
+    const fullName = profile.full_name || profile.username || 'Unknown';
+    const username = report.username || profile.username || 'unknown';
+    const bio = profile.bio || '';
+    const website = profile.website || '';
+    const followers = profile.followers || 0;
+    const following = profile.following || 0;
+    const isVerified = profile.is_verified || false;
+
     summaryContainer.innerHTML = `
-        ${profile.profile_pic_url ? `<img src="${profile.profile_pic_url}" alt="Profile" class="profile-avatar">` : ''}
+        <img src="${profilePicUrl}" alt="Profile Photo" class="profile-avatar" onerror="this.src='https://via.placeholder.com/120?text=No+Image'">
         <div class="profile-info">
-            <h2>${profile.full_name || profile.username}</h2>
-            <p class="profile-username">@${report.username}</p>
-            ${profile.website ? `<p><a href="${profile.website}" target="_blank" style="color: var(--primary);">🔗 ${profile.website}</a></p>` : ''}
+            <h2>
+                ${fullName}
+                ${isVerified ? '<span style="color: #3897f0; font-size: 0.8em;">✓</span>' : ''}
+            </h2>
+            <p class="profile-username">@${username}</p>
+            ${bio ? `<p style="margin-top: 0.5rem; color: var(--text-secondary);">${bio}</p>` : ''}
+            ${website ? `<p style="margin-top: 0.5rem;"><a href="${website}" target="_blank" style="color: var(--primary);">🔗 ${website}</a></p>` : ''}
             <div class="profile-stats">
                 <div class="stat">
                     <span class="stat-value">${report.posts.length}</span>
                     <span class="stat-label">Posts Analyzed</span>
                 </div>
+                ${followers > 0 ? `
+                <div class="stat">
+                    <span class="stat-value">${followers.toLocaleString()}</span>
+                    <span class="stat-label">Followers</span>
+                </div>
+                ` : ''}
+                ${following > 0 ? `
+                <div class="stat">
+                    <span class="stat-value">${following.toLocaleString()}</span>
+                    <span class="stat-label">Following</span>
+                </div>
+                ` : ''}
             </div>
         </div>
     `;
