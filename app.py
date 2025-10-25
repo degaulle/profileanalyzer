@@ -260,7 +260,7 @@ if __name__ == '__main__':
     print(f"Apify API: {'✓ Configured' if APIFY_API_TOKEN else '✗ Not configured'}")
     print(f"Claude API: {'✓ Configured' if ANTHROPIC_API_KEY and ANTHROPIC_API_KEY != 'your_anthropic_api_key_here' else '✗ Not configured'}")
     print("="*60)
-    print("\nServer running at: http://localhost:5000")
+    print("\nServer running at: http://localhost:8080")
     print("="*60 + "\n")
 
-    app.run(debug=True, host='0.0.0.0', port=5000)
+    app.run(debug=True, host='0.0.0.0', port=8080)
