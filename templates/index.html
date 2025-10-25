@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Instagram Profile Analyzer</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+    <!-- Main Container -->
+    <div id="app">
+        <!-- Landing Page -->
+        <div id="landing-page" class="page active">
+            <div class="container">
+                <div class="hero">
+                    <h1 class="title">
+                        <span class="gradient-text">Instagram Profile Analyzer</span>
+                    </h1>
+                    <p class="subtitle">Discover personality insights, interests, and conversation starters from any Instagram profile</p>
+                </div>
+
+                <div class="input-section">
+                    <form id="analyze-form">
+                        <div class="input-group">
+                            <input
+                                type="text"
+                                id="profile-url"
+                                placeholder="Enter Instagram profile URL or username"
+                                required
+                            />
+                            <button type="submit" class="btn-primary">
+                                <span>Analyze Profile</span>
+                                <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                                    <path d="M10 4L16 10L10 16M16 10H4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                </svg>
+                            </button>
+                        </div>
+                    </form>
+
+                    <div class="example-text">
+                        Example: https://www.instagram.com/username or just "username"
+                    </div>
+                </div>
+
+                <div class="features">
+                    <div class="feature-card">
+                        <div class="feature-icon">🔍</div>
+                        <h3>Deep Analysis</h3>
+                        <p>AI-powered insights into personality, interests, and lifestyle</p>
+                    </div>
+                    <div class="feature-card">
+                        <div class="feature-icon">💬</div>
+                        <h3>Conversation Starters</h3>
+                        <p>Get personalized openers to start meaningful conversations</p>
+                    </div>
+                    <div class="feature-card">
+                        <div class="feature-icon">🎨</div>
+                        <h3>Visual Collages</h3>
+                        <p>Automatic creation of image and video frame collages</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Loading Page -->
+        <div id="loading-page" class="page">
+            <div class="container">
+                <div class="loading-header">
+                    <h2>Analyzing <span id="loading-username" class="highlight">Profile</span></h2>
+                    <p id="loading-message">Fetching profile data...</p>
+                </div>
+
+                <div class="progress-container">
+                    <div class="progress-bar">
+                        <div id="progress-fill" class="progress-fill"></div>
+                    </div>
+                    <div id="progress-text" class="progress-text">0%</div>
+                </div>
+
+                <!-- Carousel -->
+                <div id="carousel-container" class="carousel-container" style="display: none;">
+                    <h3 class="carousel-title">Posts Preview</h3>
+                    <div class="carousel">
+                        <button class="carousel-btn prev" onclick="moveCarousel(-1)">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                                <path d="M15 18L9 12L15 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                            </svg>
+                        </button>
+                        <div class="carousel-track-container">
+                            <div id="carousel-track" class="carousel-track">
+                                <!-- Posts will be inserted here -->
+                            </div>
+                        </div>
+                        <button class="carousel-btn next" onclick="moveCarousel(1)">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                                <path d="M9 18L15 12L9 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Report Page -->
+        <div id="report-page" class="page">
+            <div class="container">
+                <!-- Header -->
+                <div class="report-header">
+                    <button class="btn-back" onclick="location.reload()">
+                        <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                            <path d="M16 10H4M4 10L10 16M4 10L10 4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                        New Analysis
+                    </button>
+                    <h1 class="report-title">Profile Analysis Report</h1>
+                </div>
+
+                <!-- Profile Summary -->
+                <div id="profile-summary" class="profile-summary">
+                    <!-- Will be populated by JavaScript -->
+                </div>
+
+                <!-- Summary Section -->
+                <div id="summary-section" class="report-section">
+                    <!-- Will be populated by JavaScript -->
+                </div>
+
+                <!-- Detailed Report -->
+                <div id="detailed-report" class="report-section">
+                    <!-- Will be populated by JavaScript -->
+                </div>
+
+                <!-- Posts Gallery -->
+                <div id="posts-gallery" class="report-section">
+                    <h2 class="section-title">All Posts</h2>
+                    <div id="posts-grid" class="posts-grid">
+                        <!-- Will be populated by JavaScript -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="/static/js/app.js"></script>
+</body>
+</html>
