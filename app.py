@@ -43,14 +43,14 @@ class AnalysisSession:
         self.completed_at = None
 
 
-def run_analysis(session_id: str, profile_url: str, results_limit: int = 30):
+def run_analysis(session_id: str, profile_url: str, results_limit: int = 10):
     """
-    Run profile analysis in background thread
+    Run profile analysis in background thread with parallel processing
 
     Args:
         session_id: Session ID
         profile_url: Instagram profile URL
-        results_limit: Number of posts to fetch
+        results_limit: Number of posts to fetch (default: 10)
     """
     session = analysis_sessions[session_id]
 
@@ -143,10 +143,10 @@ def index():
 
 @app.route('/api/analyze', methods=['POST'])
 def start_analysis():
-    """Start profile analysis"""
+    """Start profile analysis with parallel processing"""
     data = request.json
     profile_url = data.get('profile_url', '')
-    results_limit = data.get('results_limit', 30)
+    results_limit = data.get('results_limit', 10)
 
     if not profile_url:
         return jsonify({'error': 'Profile URL is required'}), 400

@@ -1,5 +1,6 @@
 """
 Image processing utilities for creating collages and extracting video frames
+with parallel processing support
 """
 
 import os
@@ -9,12 +10,16 @@ import cv2
 import numpy as np
 from io import BytesIO
 from typing import List, Tuple
+from concurrent.futures import ThreadPoolExecutor, as_completed
+import threading
 
 
 class ImageProcessor:
-    def __init__(self, output_dir="output/collages"):
-        """Initialize image processor"""
+    def __init__(self, output_dir="output/collages", max_workers=5):
+        """Initialize image processor with parallel processing support"""
         self.output_dir = output_dir
+        self.max_workers = max_workers
+        self._lock = threading.Lock()
         os.makedirs(output_dir, exist_ok=True)
 
     def download_image(self, url: str) -> Image.Image:
@@ -41,6 +46,35 @@ class ImageProcessor:
             print(f"Error downloading video from {url}: {e}")
             return None
 
+    def download_images_parallel(self, image_urls: List[str]) -> List[Image.Image]:
+        """
+        Download multiple images in parallel for faster processing
+
+        Args:
+            image_urls: List of image URLs to download
+
+        Returns:
+            List of PIL Images
+        """
+        images = [None] * len(image_urls)
+
+        def download_with_index(idx_url):
+            idx, url = idx_url
+            return idx, self.download_image(url)
+
+        with ThreadPoolExecutor(max_workers=self.max_workers) as executor:
+            futures = {executor.submit(download_with_index, (idx, url)): idx
+                      for idx, url in enumerate(image_urls)}
+
+            for future in as_completed(futures):
+                try:
+                    idx, img = future.result()
+                    images[idx] = img
+                except Exception as e:
+                    print(f"Error in parallel download: {e}")
+
+        return images
+
     def create_image_collage(self, image_urls: List[str], caption: str,
                            post_info: dict, output_filename: str) -> str:
         """
@@ -58,8 +92,8 @@ class ImageProcessor:
         if not image_urls:
             return None
 
-        # Download all images
-        images = [self.download_image(url) for url in image_urls]
+        # Download all images in parallel for faster processing
+        images = self.download_images_parallel(image_urls)
 
         # Calculate grid dimensions
         num_images = len(images)
@@ -271,3 +305,85 @@ class ImageProcessor:
             post_data,
             output_filename
         )
+
+    def process_post_collage(self, post_data: dict, post_num: int) -> str:
+        """
+        Process a single post and create its collage (helper for parallel processing)
+
+        Args:
+            post_data: Post data dictionary
+            post_num: Post number for filename
+
+        Returns:
+            Path to saved collage or None
+        """
+        post_type = post_data.get('type', '')
+
+        try:
+            if post_type == 'Video' and post_data.get('videos'):
+                # Extract frames from video
+                video_url = post_data['videos'][0]['url']
+                collage_path = self.create_video_collage(
+                    video_url,
+                    post_data.get('caption', ''),
+                    post_data,
+                    f"post_{post_num}_video_collage.jpg"
+                )
+                return collage_path
+
+            elif post_type in ['Image', 'Sidecar'] and post_data.get('images'):
+                # Create image collage
+                image_urls = [img['url'] for img in post_data['images']]
+                collage_path = self.create_image_collage(
+                    image_urls,
+                    post_data.get('caption', ''),
+                    post_data,
+                    f"post_{post_num}_collage.jpg"
+                )
+                return collage_path
+
+        except Exception as e:
+            print(f"Error creating collage for post {post_num}: {e}")
+            return None
+
+    def generate_collages_parallel(self, posts: List[dict]) -> List[dict]:
+        """
+        Generate collages for multiple posts in parallel
+
+        Args:
+            posts: List of post data dictionaries
+
+        Returns:
+            Updated posts with collage_path added
+        """
+        print(f"\nGenerating collages for {len(posts)} posts in parallel (max {self.max_workers} workers)...")
+
+        def process_with_index(idx_post):
+            idx, post = idx_post
+            post_num = idx + 1
+            collage_path = self.process_post_collage(post, post_num)
+            return idx, collage_path
+
+        # Process posts in parallel
+        collage_paths = [None] * len(posts)
+
+        with ThreadPoolExecutor(max_workers=self.max_workers) as executor:
+            futures = {executor.submit(process_with_index, (idx, post)): idx
+                      for idx, post in enumerate(posts)}
+
+            completed = 0
+            for future in as_completed(futures):
+                try:
+                    idx, collage_path = future.result()
+                    collage_paths[idx] = collage_path
+                    completed += 1
+                    print(f"  Progress: {completed}/{len(posts)} collages completed")
+                except Exception as e:
+                    print(f"Error in parallel collage generation: {e}")
+
+        # Update posts with collage paths
+        for idx, post in enumerate(posts):
+            post['collage_path'] = collage_paths[idx]
+
+        print(f"✓ Completed {len(posts)} collages in parallel!\n")
+        return posts

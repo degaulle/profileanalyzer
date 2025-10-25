@@ -228,7 +228,7 @@ class InstagramScraper:
 
     def generate_collages(self, posts):
         """
-        Generate image collages for all posts
+        Generate image collages for all posts using parallel processing
 
         Args:
             posts: List of processed posts
@@ -236,40 +236,8 @@ class InstagramScraper:
         Returns:
             Updated posts with collage paths
         """
-        print("\nGenerating image collages...")
-
-        for idx, post in enumerate(posts):
-            post_num = idx + 1
-            post_type = post.get('type', '')
-
-            try:
-                if post_type == 'Video' and post.get('videos'):
-                    # Extract frames from video
-                    video_url = post['videos'][0]['url']
-                    collage_path = self.image_processor.create_video_collage(
-                        video_url,
-                        post.get('caption', ''),
-                        post,
-                        f"post_{post_num}_video_collage.jpg"
-                    )
-                    post['collage_path'] = collage_path
-
-                elif post_type in ['Image', 'Sidecar'] and post.get('images'):
-                    # Create image collage
-                    image_urls = [img['url'] for img in post['images']]
-                    collage_path = self.image_processor.create_image_collage(
-                        image_urls,
-                        post.get('caption', ''),
-                        post,
-                        f"post_{post_num}_collage.jpg"
-                    )
-                    post['collage_path'] = collage_path
-
-            except Exception as e:
-                print(f"Error creating collage for post {post_num}: {e}")
-                post['collage_path'] = None
-
-        return posts
+        # Use parallel processing for faster collage generation
+        return self.image_processor.generate_collages_parallel(posts)
 
     def scrape_personal_website(self, profile_info):
         """
@@ -332,13 +300,13 @@ class InstagramScraper:
             )
             print("Database save complete!")
 
-    def scrape_profile(self, profile_url: str, results_limit: int = 30):
+    def scrape_profile(self, profile_url: str, results_limit: int = 10):
         """
-        Main method to scrape entire profile
+        Main method to scrape entire profile with parallel processing
 
         Args:
             profile_url: Instagram profile URL or username
-            results_limit: Number of posts to fetch
+            results_limit: Number of posts to fetch (default: 10)
 
         Returns:
             Complete profile data with analysis
