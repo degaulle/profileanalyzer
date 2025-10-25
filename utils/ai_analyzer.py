@@ -15,7 +15,7 @@ class ProfileAnalyzer:
     def __init__(self, api_key: str):
         """Initialize analyzer with Anthropic API key"""
         self.client = Anthropic(api_key=api_key)
-        self.model = "claude-3-5-sonnet-20240620"  # Claude 3.5 Sonnet
+        self.model = "claude-3-5-sonnet-20241022"  # Claude 3.5 Sonnet (Oct 2024)
 
     def analyze_profile(self, posts_data: List[Dict], profile_info: Dict,
                        website_data: Dict = None, collage_paths: List[str] = None) -> Dict[str, Any]:
@@ -68,30 +68,46 @@ class ProfileAnalyzer:
         # Add images if available
         message_content.extend(image_content)
 
-        try:
-            # Call Claude API
-            response = self.client.messages.create(
-                model=self.model,
-                max_tokens=4096,
-                temperature=0.7,
-                messages=[
-                    {
-                        "role": "user",
-                        "content": message_content
-                    }
-                ]
-            )
+        # Try multiple models in order of preference
+        models_to_try = [
+            "claude-3-5-sonnet-20241022",
+            "claude-3-5-sonnet-20240620",
+            "claude-3-opus-20240229",
+            "claude-3-sonnet-20240229"
+        ]
 
-            # Parse response
-            analysis_text = response.content[0].text
-            analysis = self._parse_analysis_response(analysis_text, posts_data)
+        last_error = None
+        for model_name in models_to_try:
+            try:
+                print(f"Trying model: {model_name}...")
+                # Call Claude API
+                response = self.client.messages.create(
+                    model=model_name,
+                    max_tokens=4096,
+                    temperature=0.7,
+                    messages=[
+                        {
+                            "role": "user",
+                            "content": message_content
+                        }
+                    ]
+                )
 
-            print("Analysis complete!")
-            return analysis
+                # Parse response
+                analysis_text = response.content[0].text
+                analysis = self._parse_analysis_response(analysis_text, posts_data)
 
-        except Exception as e:
-            print(f"Error during AI analysis: {e}")
-            return self._generate_fallback_analysis(posts_data, profile_info)
+                print(f"✓ Analysis complete using {model_name}!")
+                return analysis
+
+            except Exception as e:
+                last_error = e
+                print(f"✗ Model {model_name} failed: {e}")
+                continue
+
+        # If all models fail, use fallback
+        print(f"All AI models failed. Using fallback analysis. Last error: {last_error}")
+        return self._generate_fallback_analysis(posts_data, profile_info)
 
     def _build_analysis_prompt(self, posts_data: List[Dict], profile_info: Dict,
                               website_data: Dict = None) -> str:
